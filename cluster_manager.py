@@ -7,6 +7,8 @@
 #! /usr/bin/python
 
 import subprocess
+import os
+
 
 # Calculate CPU usage based on requested QoS
 def convertQoSToCpuUsage():
@@ -68,6 +70,7 @@ print "Memory", mem_arr
 print "IO", io_arr
 
 # Create container for each application
+cmd=""
 for i in range (0,n):
 	print "creating a container for app ", i+1, ".Please wait ..."
 	container_name = "node"+str(i+1)
@@ -75,7 +78,16 @@ for i in range (0,n):
 
 	# Create a container for node{i}
 	subprocess.call(["docker", "run", "-d", "--name", container_name, "-it", "-c", str(cpu_arr[i]), "-m", mem_arr[i], image_name])
-	str1 = "Hello from "+container_name
 
 	# Test new container is running
 	subprocess.call(["docker", "exec", container_name, "python3", app_name])
+
+	if i == 0:
+		cmd=cmd+" 3>"
+    else:
+        cmd=cmd+" 3>>"
+    cmd=cmd+"results.out perf stat --log-fd 3 docker exec -t "+container_name+" python3 "+app_name
+    if i < n-1:
+        cmd=cmd+" &"
+print cmd
+os.system(cmd)
